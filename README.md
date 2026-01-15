@@ -1,6 +1,6 @@
 # Canine Sports Hub – Feature Requests & Bug Reports
 
-![Canine Sports Hub Logo](https://via.placeholder.com/120x120.png?text=CSH) <!-- Replace with your actual logo if you have one -->
+![Canine Sports Hub Logo](images/logo.png)
 
 **Welcome!**  
 This is the **public issue tracker** for **Canine Sports Hub** — the essential tool for finding, registering, participating in, and hosting canine sporting events (Flyball, Barn Hunt, Dock Diving, Agility, and more).
