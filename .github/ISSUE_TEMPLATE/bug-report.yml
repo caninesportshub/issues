@@ -1,0 +1,52 @@
+name: Bug Report
+description: Report a bug in Canine Sports Hub
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Which app are you using?
+      options:
+        - Web (browser-based)
+        - Phone/Tablet (mobile app)
+      multiple: false
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Role
+      description: What is your role when experiencing the issue?
+      options:
+        - Host (managing an event)
+        - Participant (attending an event)
+      multiple: false
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened?
+      placeholder: "E.g., When trying to seed my flyball event..."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: "1. Open race timer... 2. Simulate offline..."
+    validations:
+      required: false
+  - type: input
+    id: device
+    attributes:
+      label: Device/OS
+      placeholder: "E.g., iOS 18, Android 14, Chrome on Windows"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs/Screenshots
+      description: Paste from App Insights or attach images (e.g., NDI stream failure).
