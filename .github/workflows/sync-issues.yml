@@ -24,17 +24,26 @@ jobs:
               issue_number: context.issue.number
             });
 
-            // Parse YAML frontmatter from body (GitHub forms embed as --- YAML ---)
             const body = issue.data.body || '';
-            const yamlMatch = body.match(/---\s*([\s\S]*?)\s*---/);
+            console.log('Full issue body for debug:', body);  // Logs the raw body — very helpful!
+
             let platform = 'untriaged';
-            if (yamlMatch && yamlMatch[1]) {
-              const yamlLines = yamlMatch[1].split('\n');
-              const platformLine = yamlLines.find(line => line.trim().startsWith('platform:'));
-              if (platformLine) {
-                platform = platformLine.split(':')[1].trim().toLowerCase();
+
+            // Find the Platform section: ### Platform followed by content until next ###
+            const platformSectionMatch = body.match(/###\s*Platform\s*([\s\S]*?)(?=###|$)/i);
+            if (platformSectionMatch && platformSectionMatch[1]) {
+              // Split lines, trim, remove empties, take first real value
+              const lines = platformSectionMatch[1]
+                .split('\n')
+                .map(l => l.trim())
+                .filter(l => l.length > 0);
+
+              if (lines.length > 0) {
+                platform = lines[0].toLowerCase();
               }
             }
+
+            console.log(`Detected platform value: "${platform}"`);
 
             // Determine target repo (update these to your EXACT private repo names!)
             let targetRepo;
