@@ -1,28 +1,30 @@
 name: Sync Issues to Private Repos
+
 on:
   issues:
     types: [opened, edited]
+
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Parse and Mirror Issue
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.PRIVATE_REPOS_TOKEN }}  # PAT with access to both privates
+          github-token: ${{ secrets.PRIVATE_REPOS_TOKEN }}  # Your fine-grained PAT
           script: |
-            const { Octokit } = require('@octokit/action');
-            const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-            
+            // No need to import or create Octokit — 'github' is already available and authenticated!
+
             // Get issue details
-            const issue = await octokit.rest.issues.get({
+            const issue = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number
             });
-            
-            // Parse YAML frontmatter from body (template embeds as --- YAML ---)
+
+            // Parse YAML frontmatter from body (GitHub forms embed as --- YAML ---)
             const body = issue.data.body || '';
             const yamlMatch = body.match(/---\s*([\s\S]*?)\s*---/);
             let platform = 'untriaged';
@@ -33,16 +35,16 @@ jobs:
                 platform = platformLine.split(':')[1].trim().toLowerCase();
               }
             }
-            
-            // Determine target repo
+
+            // Determine target repo (update these to your EXACT private repo names!)
             let targetRepo;
             if (platform.includes('web')) {
-              targetRepo = 'caninesportshub';
-            } else if (platform.includes('phone') || platform.includes('tablet')) {
-              targetRepo = 'mobil';
+              targetRepo = 'caninesportshub';  // <-- Confirm this exact name
+            } else if (platform.includes('phone') || platform.includes('tablet') || platform.includes('mobile')) {
+              targetRepo = 'mobile';  // <-- Confirm this exact name
             } else {
-              // Fallback: Label as untriaged in public repo
-              await octokit.rest.issues.addLabels({
+              // Fallback: label in public repo for manual review
+              await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
@@ -51,20 +53,20 @@ jobs:
               console.log('No platform selected - labeled untriaged');
               return;
             }
-            
+
             // Create mirrored issue in target private repo
-            await octokit.rest.issues.create({
+            await github.rest.issues.create({
               owner: context.repo.owner,
               repo: targetRepo,
               title: `[Public #${context.issue.number}] ${issue.data.title}`,
               body: `Synced from public: ${issue.data.html_url}\n\n${body}`,
-              labels: ['synced', 'bug']  // Add custom labels, e.g., 'flyball'
+              labels: ['synced', 'bug']
             });
-            
-            // Optional: Comment on public issue
-            await octokit.rest.issues.createComment({
+
+            // Optional: add comment on public issue to confirm sync
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `This issue has been mirrored to the ${platform} private repo for tracking. Thanks!`
+              body: `This issue has been mirrored to the **${platform}** private repo for tracking. Thanks!`
             });
