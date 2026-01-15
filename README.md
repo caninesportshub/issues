@@ -12,6 +12,7 @@ Here you can safely report bugs, suggest improvements, or request new features �
 
 ## Why this separate repo?
 We want to make it easy for competitors, judges, event organizers, and dog sport enthusiasts to share feedback without needing access to the private code.  
+
 Your input directly helps improve timing, scoring, registration, real-time updates, offline support, and the overall experience!
 
 ## How to Contribute
@@ -23,18 +24,16 @@ We have two friendly templates to choose from:
 
 ### 🐛 Report a Bug
 Found something not working as expected?  
-Examples: timing glitches during a Flyball race, sync issues on mobile, registration errors, UI problems on tablet, etc.
 
 [Create Bug Report →](https://github.com/caninesportshub/issues/issues/new?template=bug-report.yml)
 
 ### ✨ Request a Feature or Suggest an Improvement
 Have an idea to make Canine Sports Hub even better?  
-Examples: new scoring options, better mobile offline mode, integration ideas, easier event setup, etc.
 
 [Create Feature Request →](https://github.com/caninesportshub/issues/issues/new?template=feature-request.yml)
 
 ## Tips for Great Issues
-- Use a clear, descriptive **title** (e.g., "Timer freezes during low-network Flyball race on Android tablet")
+- Use a clear, descriptive **title** (e.g., "When seeding teams from the 'Teams' duplicate teams are being created.")
 - Include as much detail as possible:
   - What you were doing
   - What happened (and what you expected)
@@ -47,7 +46,7 @@ Examples: new scoring options, better mobile offline mode, integration ideas, ea
 ## Questions or Need Help?
 - Check the [existing issues](https://github.com/caninesportshub/issues/issues) first
 - For general questions about using the app → feel free to ask in a **feature request** or **bug report** (we'll label it accordingly)
-- Follow us for updates: [Facebook – Canine Sports Hub](https://www.facebook.com/p/Canine-Sports-Hub-100076661461670)
+- Follow us for updates: [Facebook – Canine Sports Hub](https://www.facebook.com/profile.php?id=100076661461670)
 
 Thank you for helping make Canine Sports Hub the best tool for dog sports!  
 Your feedback matters — every issue you open helps thousands of dogs and handlers have better events. 🐶🏆
