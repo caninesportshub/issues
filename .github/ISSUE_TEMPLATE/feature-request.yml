@@ -1,0 +1,40 @@
+name: Feature Request
+description: Suggest or request a new feature in Canine Sports Hub
+title: "[Feature] "
+labels: ["feature"]
+body:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Which app are you using?
+      options:
+        - Web (browser-based)
+        - Phone/Tablet (mobile app)
+      multiple: false
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Role
+      description: What is your role when experiencing the issue?
+      options:
+        - Host (managing an event)
+        - Participant (attending an event)
+      multiple: false
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What is your suggestion?
+      placeholder: "E.g., It would be really nice if..."
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Screenshots
+      description: Paste any mockups you might have done.
