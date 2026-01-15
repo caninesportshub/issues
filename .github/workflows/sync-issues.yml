@@ -24,6 +24,17 @@ jobs:
               issue_number: context.issue.number
             });
 
+            const labels = issue.data.labels.map(l => l.name.toLowerCase());
+
+            let issueType = 'bug';  // default fallback
+            if (labels.includes('enhancement') || labels.includes('feature-request')) {
+              issueType = 'enhancement';
+            } else if (labels.includes('bug') || labels.includes('bug-report')) {
+              issueType = 'bug';
+            }
+
+            console.log(`Detected issue type from labels: "${issueType}"`);            
+
             const body = issue.data.body || '';
             console.log('Full issue body for debug:', body);  // Logs the raw body — very helpful!
 
@@ -69,7 +80,7 @@ jobs:
               repo: targetRepo,
               title: `[Public #${context.issue.number}] ${issue.data.title}`,
               body: `Synced from public: ${issue.data.html_url}\n\n${body}`,
-              labels: ['synced', 'bug']
+              labels: ['synced', issueType]
             });
 
             // Optional: add comment on public issue to confirm sync
