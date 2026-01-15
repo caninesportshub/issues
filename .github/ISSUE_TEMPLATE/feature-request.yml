@@ -1,7 +1,7 @@
 name: Feature Request
 description: Suggest or request a new feature in Canine Sports Hub
-title: "[Feature] "
-labels: ["feature"]
+title: "[Enhancement] "
+labels: ["enhancement"]
 body:
   - type: dropdown
     id: platform
