@@ -38,9 +38,9 @@ jobs:
 
             // Determine target repo (update these to your EXACT private repo names!)
             let targetRepo;
-            if (platform.includes('web')) {
+            if (platform.includes('Web')) {
               targetRepo = 'caninesportshub';  // <-- Confirm this exact name
-            } else if (platform.includes('phone') || platform.includes('tablet') || platform.includes('mobile')) {
+            } else if (platform.includes('Phone') || platform.includes('tablet') || platform.includes('mobile')) {
               targetRepo = 'mobile';  // <-- Confirm this exact name
             } else {
               // Fallback: label in public repo for manual review
