@@ -1,7 +1,8 @@
 name: Bug Report
 description: Report a bug in Canine Sports Hub
-title: "[Bug]"
+title: "[Bug] "
 labels: ["bug"]
+type: bug
 body:
   - type: dropdown
     id: platform
