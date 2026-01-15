@@ -3,4 +3,4 @@
 This repo is for **reporting issues with** or **suggesting or requestin new features.**
 
 ## How to Report
-[New Issue](https://github.com/caninesportshub/issues/new?assignees=&labels=&projects=&template=bug-report.yml&title=)
+[New Issue](https://github.com/caninesportshub/issues/new?template=bug-report.yml)
