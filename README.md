@@ -1,6 +1,10 @@
 # Canine Sports Hub – Feature Requests & Bug Reports
 
-<img src="images/logo.png" alt="Canine Sports Hub Logo" width="120" height="120">
+<div align="center">
+  <img src="images/logo.png" alt="Canine Sports Hub Logo" width="150">
+  <br>
+  <strong>Canine Sports Hub</strong>
+</div>
 
 **Welcome!**  
 This is the **public issue tracker** for **Canine Sports Hub** — the essential tool for finding, registering, participating in, and hosting canine sporting events (Flyball, Barn Hunt, Dock Diving, Agility, and more).
