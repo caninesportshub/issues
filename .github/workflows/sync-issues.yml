@@ -39,27 +39,42 @@ jobs:
             console.log('Full issue body for debug:', body);  // Logs the raw body — very helpful!
 
             let platform = 'untriaged';
-            const platformsDetected = [];
+            let platformsDetected = [];
             
-            // More robust regex to find the ### Platform(s) section (case-insensitive, allows for (s) or slight title variations)
-            const platformSectionMatch = body.match(/###\s*Platform(?:\(s\))?\s*([\s\S]*?)(?=###|$)/i);
+            // Find the Platform section (case-insensitive, handles "Platform", "Platform(s)", etc.)
+            const platformSectionMatch = body.match(/###\s*Platform(?:\s*\(s\))?\s*([\s\S]*?)(?=###|$)/i);
             
             if (platformSectionMatch && platformSectionMatch[1]) {
-              const sectionContent = platformSectionMatch[1];
+              const sectionContent = platformSectionMatch[1].trim();
             
-              // Look for lines like "- [x] Some Option" or "- [ ] Some Option"
-              const checkboxMatches = sectionContent.matchAll(/- \[(x| )\]\s*(.+)/gi);
+              // First, try checkbox format (standard for multi-select)
+              const checkboxMatches = [...sectionContent.matchAll(/- \[(x| )\]\s*(.+)/gi)];
             
-              for (const match of checkboxMatches) {
-                const checked = match[1].toLowerCase() === 'x';
-                const value = match[2].trim();
+              if (checkboxMatches.length > 0) {
+                for (const match of checkboxMatches) {
+                  const checked = match[1].toLowerCase() === 'x';
+                  const value = match[2].trim();
             
-                if (checked) {
-                  const lowerValue = value.toLowerCase();
-                  if (lowerValue.includes('web')) {
-                    platformsDetected.push('web');
+                  if (checked) {
+                    const lowerValue = value.toLowerCase();
+                    if (lowerValue.includes('web')) platformsDetected.push('web');
+                    if (lowerValue.includes('phone') || lowerValue.includes('tablet') || lowerValue.includes('mobile')) {
+                      platformsDetected.push('mobile');
+                    }
                   }
-                  if (lowerValue.includes('phone') || lowerValue.includes('tablet') || lowerValue.includes('mobile')) {
+                }
+              } else {
+                // Fallback: plain text (single-select old style, or comma/newline separated)
+                // Split on commas, newlines, or both; clean up
+                const linesOrItems = sectionContent
+                  .split(/[\n,]+/)                     // split on newlines OR commas
+                  .map(item => item.trim())
+                  .filter(item => item.length > 0);
+            
+                for (const item of linesOrItems) {
+                  const lowerItem = item.toLowerCase();
+                  if (lowerItem.includes('web')) platformsDetected.push('web');
+                  if (lowerItem.includes('phone') || lowerItem.includes('tablet') || lowerItem.includes('mobile')) {
                     platformsDetected.push('mobile');
                   }
                 }
