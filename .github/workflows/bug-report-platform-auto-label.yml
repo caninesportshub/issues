@@ -1,21 +1,29 @@
-name: Auto-label by Platform
+name: Bug Report Auto-label by Platform
 
 on:
   issues:
     types: [opened]
 
+permissions:
+  issues: write      # Required to add labels
+  contents: read     # Often needed for checkout + reading templates
+
 jobs:
   label:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4   # ← Add this! Many actions need the repo checked out
+
       - name: Parse issue form
         uses: stefanbuck/github-issue-parser@v3
         id: issue-parser
         with:
-          template-path: .github/ISSUE_TEMPLATE/bug-report.yml   # ← change to your actual template filename!
+          issue-body: ${{ github.event.issue.body }}          # REQUIRED
+          template-path: .github/ISSUE_TEMPLATE/bug-report.yml  # optional but good
 
       - name: Apply platform labels
         uses: redhat-plumbers-in-action/advanced-issue-labeler@v3
         with:
-          issue-form: '${{ steps.issue-parser.outputs.json }}'
+          issue-form: '${{ steps.issue-parser.outputs.json }}'   # or .jsonString if v3 uses that
           config-path: .github/auto-label-config.yml
+          token: ${{ secrets.GITHUB_TOKEN }}                     # ← This fixes the token error!
