@@ -1,4 +1,4 @@
-name: Auto-label by Platform
+name: Bug Report Auto-label by Platform
 
 on:
   issues:
