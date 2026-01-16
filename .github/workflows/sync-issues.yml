@@ -39,54 +39,83 @@ jobs:
             console.log('Full issue body for debug:', body);  // Logs the raw body — very helpful!
 
             let platform = 'untriaged';
-
-            // Find the Platform section: ### Platform followed by content until next ###
-            const platformSectionMatch = body.match(/###\s*Platform\s*([\s\S]*?)(?=###|$)/i);
+            const platformsDetected = [];
+            
+            // More robust regex to find the ### Platform(s) section (case-insensitive, allows for (s) or slight title variations)
+            const platformSectionMatch = body.match(/###\s*Platform(?:\(s\))?\s*([\s\S]*?)(?=###|$)/i);
+            
             if (platformSectionMatch && platformSectionMatch[1]) {
-              // Split lines, trim, remove empties, take first real value
-              const lines = platformSectionMatch[1]
-                .split('\n')
-                .map(l => l.trim())
-                .filter(l => l.length > 0);
-
-              if (lines.length > 0) {
-                platform = lines[0].toLowerCase();
+              const sectionContent = platformSectionMatch[1];
+            
+              // Look for lines like "- [x] Some Option" or "- [ ] Some Option"
+              const checkboxMatches = sectionContent.matchAll(/- \[(x| )\]\s*(.+)/gi);
+            
+              for (const match of checkboxMatches) {
+                const checked = match[1].toLowerCase() === 'x';
+                const value = match[2].trim();
+            
+                if (checked) {
+                  const lowerValue = value.toLowerCase();
+                  if (lowerValue.includes('web')) {
+                    platformsDetected.push('web');
+                  }
+                  if (lowerValue.includes('phone') || lowerValue.includes('tablet') || lowerValue.includes('mobile')) {
+                    platformsDetected.push('mobile');
+                  }
+                }
               }
             }
-
-            console.log(`Detected platform value: "${platform}"`);
-
-            // Determine target repo (update these to your EXACT private repo names!)
-            let targetRepo;
-            if (platform.includes('web')) {
-              targetRepo = 'caninesportshub';  // <-- Confirm this exact name
-            } else if (platform.includes('phone') || platform.includes('tablet') || platform.includes('mobile')) {
-              targetRepo = 'mobile';  // <-- Confirm this exact name
-            } else {
-              // Fallback: label in public repo for manual review
+            
+            console.log(`Detected platforms: ${platformsDetected.join(', ') || 'none'}`);
+            
+            // Now decide target repo(s) — since we can have multiple, you have a few options:
+            // OPTION A: Sync to BOTH repos if both platforms are selected (recommended for cross-platform bugs)
+            // OPTION B: Sync only to one (e.g. prefer mobile if both, or pick first)
+            // OPTION C: Sync to a shared repo + label accordingly
+            
+            // Here's OPTION A implementation (sync to all matching repos):
+            
+            if (platformsDetected.length === 0) {
+              // Fallback: label public issue for manual triage
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
                 labels: ['untriaged']
               });
-              console.log('No platform selected - labeled untriaged');
+              console.log('No platforms detected - labeled untriaged');
               return;
             }
-
-            // Create mirrored issue in target private repo
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: targetRepo,
-              title: `[Public #${context.issue.number}] ${issue.data.title}`,
-              body: `Synced from public: ${issue.data.html_url}\n\n${body}`,
-              labels: ['synced', issueType]
+            
+            const targetRepos = new Set();  // avoid duplicates
+            
+            platformsDetected.forEach(p => {
+              if (p === 'web') targetRepos.add('caninesportshub');
+              if (p === 'mobile') targetRepos.add('mobile');
             });
-
-            // Optional: add comment on public issue to confirm sync
+            
+            if (targetRepos.size === 0) {
+              console.log('No matching repos found for detected platforms');
+              return;
+            }
+            
+            // Create mirrored issue in EACH target repo
+            for (const targetRepo of targetRepos) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: targetRepo,
+                title: `[Public #${context.issue.number}] ${issue.data.title}`,
+                body: `Synced from public: ${issue.data.html_url}\n\n${body}`,
+                labels: ['synced', issueType]
+              });
+              console.log(`Mirrored issue to: ${targetRepo}`);
+            }
+            
+            // Optional: better comment on public issue
+            const syncedToText = Array.from(targetRepos).join(' and ');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `This issue has been mirrored to the **${platform}** private repo for tracking. Thanks!`
+              body: `This issue has been mirrored to the **${syncedToText}** private repo${targetRepos.size > 1 ? 's' : ''} for tracking. Thanks!`
             });
