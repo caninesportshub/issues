@@ -1,0 +1,21 @@
+name: Auto-label by Platform
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parse issue form
+        uses: stefanbuck/github-issue-parser@v3
+        id: issue-parser
+        with:
+          template-path: .github/ISSUE_TEMPLATE/feature-request.yml   # ← change to your actual template filename!
+
+      - name: Apply platform labels
+        uses: redhat-plumbers-in-action/advanced-issue-labeler@v3
+        with:
+          issue-form: '${{ steps.issue-parser.outputs.json }}'
+          config-path: .github/auto-label-config.yml
