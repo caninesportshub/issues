@@ -24,7 +24,7 @@ jobs:
       - name: Apply platform labels
         uses: redhat-plumbers-in-action/advanced-issue-labeler@v3
         with:
-          issue-form: ${{ steps.issue-parser.outputs.jsonString }}   # stringified JSON
-          section: platform                                          # ← This fixes the error! Matches your id: platform
-          config-path: .github/auto-label-config.yml
+          issue-form: ${{ steps.issue-parser.outputs.jsonString }}
+          section: platform
           token: ${{ secrets.GITHUB_TOKEN }}
+          # no config-path → assumes selected values are label names (but your values have spaces/parentheses, so config is better)
