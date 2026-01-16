@@ -5,25 +5,26 @@ on:
     types: [opened]
 
 permissions:
-  issues: write      # Required to add labels
-  contents: read     # For checkout + reading files
+  issues: write
+  contents: read
 
 jobs:
   label:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4   # Good to have for accessing config files
+      - uses: actions/checkout@v4
 
       - name: Parse issue form
         uses: stefanbuck/github-issue-parser@v3
         id: issue-parser
         with:
-          issue-body: ${{ github.event.issue.body }}     # Required in v3
-          template-path: .github/ISSUE_TEMPLATE/bug-report.yml   # Confirm this matches your exact filename
+          issue-body: ${{ github.event.issue.body }}
+          template-path: .github/ISSUE_TEMPLATE/bug-report.yml   # double-check exact name!
 
       - name: Apply platform labels
         uses: redhat-plumbers-in-action/advanced-issue-labeler@v3
         with:
-          issue-form: ${{ steps.issue-parser.outputs.jsonString }}   # ← CHANGE THIS! Use jsonString, not json
+          issue-form: ${{ steps.issue-parser.outputs.jsonString }}   # stringified JSON
+          section: platform                                          # ← This fixes the error! Matches your id: platform
           config-path: .github/auto-label-config.yml
-          token: ${{ secrets.GITHUB_TOKEN }}                         # Already good, but confirm
+          token: ${{ secrets.GITHUB_TOKEN }}
