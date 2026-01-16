@@ -11,7 +11,7 @@ body:
       options:
         - Web (browser-based)
         - Phone/Tablet (mobile app)
-      multiple: false
+      multiple: true
     validations:
       required: true
   - type: dropdown
