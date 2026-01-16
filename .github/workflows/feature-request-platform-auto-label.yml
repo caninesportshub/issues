@@ -5,25 +5,26 @@ on:
     types: [opened]
 
 permissions:
-  issues: write      # Required to add labels
-  contents: read     # Often needed for checkout + reading templates
+  issues: write
+  contents: read
 
 jobs:
   label:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4   # ← Add this! Many actions need the repo checked out
+      - uses: actions/checkout@v4
 
       - name: Parse issue form
         uses: stefanbuck/github-issue-parser@v3
         id: issue-parser
         with:
-          issue-body: ${{ github.event.issue.body }}          # REQUIRED
-          template-path: .github/ISSUE_TEMPLATE/feature-request.yml  # optional but good
+          issue-body: ${{ github.event.issue.body }}
+          template-path: .github/ISSUE_TEMPLATE/feature-request.yml   # double-check exact name!
 
       - name: Apply platform labels
         uses: redhat-plumbers-in-action/advanced-issue-labeler@v3
         with:
-          issue-form: '${{ steps.issue-parser.outputs.json }}'   # or .jsonString if v3 uses that
-          config-path: .github/auto-label-config.yml
-          token: ${{ secrets.GITHUB_TOKEN }}                     # ← This fixes the token error!
+          issue-form: ${{ steps.issue-parser.outputs.jsonString }}
+          section: platform                                          # Still needed
+          config-path: .github/advanced-issue-labeler.yml            # ← Point here (or your preferred name)
+          token: ${{ secrets.GITHUB_TOKEN }}
