@@ -1,9 +1,10 @@
-policies:
-  - name: Platform labeling
-    sections:          # ← Note plural 'sections' here (array of IDs)
-      - platform
-    rules:
-      - pattern: '(?i)web'                     # (?i) = case-insensitive
-        label: web
-      - pattern: '(?i)phone|tablet|mobile'     # matches any of these keywords
-        label: mobile
+policy:
+  section:
+    id: platform
+    label:
+      - name: web
+        keys:
+          - Web (browser-based)     # Exact match – copy-paste the full option text from your form
+      - name: mobile
+        keys:
+          - Phone/Tablet (mobile app)   # Exact match for the other option
