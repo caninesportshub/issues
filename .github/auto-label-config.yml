@@ -1,13 +1,9 @@
 policies:
-  - name: Platform labels for bug & other forms
-    template:                     # ← This is an array → supports multiple templates!
-      - bug-report.yml
-      - feature-request.yml       # add as many as needed
-      # - question.yml            # uncomment & add others if they have the platform field
-    sections:
-      - platform                  # the 'id: platform' from your form
+  - name: Platform labeling
+    sections:          # ← Note plural 'sections' here (array of IDs)
+      - platform
     rules:
-      - pattern: 'Web \(browser-based\)'
+      - pattern: '(?i)web'                     # (?i) = case-insensitive
         label: web
-      - pattern: 'Phone/Tablet \(mobile app\)'
+      - pattern: '(?i)phone|tablet|mobile'     # matches any of these keywords
         label: mobile
