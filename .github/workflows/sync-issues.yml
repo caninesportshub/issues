@@ -21,26 +21,22 @@ jobs:
               issue_number: context.issue.number
             });
 
-            // ── Get all labels (case insensitive) ───────────────────────────────
-            const labels = issue.data.labels.map(l => l.name.toLowerCase());
+            // ── Get labels in lowercase for matching + original labels for forwarding ──
+            const lowerLabels = issue.data.labels.map(l => l.name.toLowerCase());
+            const originalLabels = issue.data.labels; // keep full objects with original name/casing
 
-            // ── Determine target repo(s) based on platform labels ───────────────
+            // ── Determine target repo(s) based on platform labels ──────────────────────
             const targetRepos = new Set();
 
-            if (labels.includes('web')) {
+            if (lowerLabels.includes('web')) {
               targetRepos.add('caninesportshub');
             }
 
-            if (labels.includes('android') || labels.includes('ios')) {
+            if (lowerLabels.includes('android') || lowerLabels.includes('ios')) {
               targetRepos.add('mobile');
             }
 
-            // Optional: also support combined label like "mobile" if you ever want to use it
-            // if (labels.includes('mobile')) {
-            //   targetRepos.add('mobile');
-            // }
-
-            // ── Fallback when no platform label is present ───────────────────────
+            // Fallback when no platform label is present
             if (targetRepos.size === 0) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
@@ -52,11 +48,11 @@ jobs:
               return;
             }
 
-            // ── Determine issue type ─────────────────────────────────────────────
+            // ── Determine issue type ──────────────────────────────────────────────────
             let issueType = 'bug';  // default
-            if (labels.includes('enhancement') || labels.includes('feature-request')) {
+            if (lowerLabels.includes('enhancement') || lowerLabels.includes('feature-request')) {
               issueType = 'enhancement';
-            } else if (labels.includes('bug') || labels.includes('bug-report')) {
+            } else if (lowerLabels.includes('bug') || lowerLabels.includes('bug-report')) {
               issueType = 'bug';
             }
 
@@ -66,19 +62,37 @@ jobs:
             const body = issue.data.body || '';
             const publicLink = `Synced from public: ${issue.data.html_url}\n\n`;
 
-            // ── Mirror to each target repo ───────────────────────────────────────
+            // ── Prepare forwarded mobile platform labels (only ios/android) ───────────
+            const platformLabels = originalLabels
+              .filter(l => {
+                const name = l.name.toLowerCase();
+                return name === 'ios' || name === 'android';
+              })
+              .map(l => l.name); // keep original casing!
+
+            // ── Base labels + forwarded platform labels (only for mobile repo) ────────
+            const baseLabels = ['synced', issueType];
+
+            // Mirror to each target repo
             for (const targetRepo of targetRepos) {
+              let labelsToApply = [...baseLabels];
+
+              // Only forward ios/android labels to the mobile repo
+              if (targetRepo === 'mobile') {
+                labelsToApply = [...new Set([...baseLabels, ...platformLabels])]; // dedupe just in case
+              }
+
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: targetRepo,
                 title: `[Public #${context.issue.number}] ${issue.data.title}`,
                 body: publicLink + body,
-                labels: ['synced', issueType]
+                labels: labelsToApply
               });
-              console.log(`→ Mirrored to ${targetRepo}`);
+              console.log(`→ Mirrored to ${targetRepo} with labels: ${labelsToApply.join(', ')}`);
             }
 
-            // ── Leave nice comment on public issue ───────────────────────────────
+            // ── Leave nice comment on public issue ────────────────────────────────────
             const syncedTo = [...targetRepos]
               .map(r => `**${r}**`)
               .join(' and ');
