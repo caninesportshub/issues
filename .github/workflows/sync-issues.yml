@@ -13,124 +13,82 @@ jobs:
       - name: Parse and Mirror Issue
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.PRIVATE_REPOS_TOKEN }}  # Your fine-grained PAT
+          github-token: ${{ secrets.PRIVATE_REPOS_TOKEN }}  # PAT with access to both private repos
           script: |
-            // No need to import or create Octokit — 'github' is already available and authenticated!
-
-            // Get issue details
             const issue = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number
             });
 
+            // ── Get all labels (case insensitive) ───────────────────────────────
             const labels = issue.data.labels.map(l => l.name.toLowerCase());
 
-            let issueType = 'bug';  // default fallback
+            // ── Determine target repo(s) based on platform labels ───────────────
+            const targetRepos = new Set();
+
+            if (labels.includes('web')) {
+              targetRepos.add('caninesportshub');
+            }
+
+            if (labels.includes('android') || labels.includes('ios')) {
+              targetRepos.add('mobile');
+            }
+
+            // Optional: also support combined label like "mobile" if you ever want to use it
+            // if (labels.includes('mobile')) {
+            //   targetRepos.add('mobile');
+            // }
+
+            // ── Fallback when no platform label is present ───────────────────────
+            if (targetRepos.size === 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ['untriaged-platform']
+              });
+              console.log('No platform label (web/android/ios) found → added untriaged-platform');
+              return;
+            }
+
+            // ── Determine issue type ─────────────────────────────────────────────
+            let issueType = 'bug';  // default
             if (labels.includes('enhancement') || labels.includes('feature-request')) {
               issueType = 'enhancement';
             } else if (labels.includes('bug') || labels.includes('bug-report')) {
               issueType = 'bug';
             }
 
-            console.log(`Detected issue type from labels: "${issueType}"`);            
+            console.log(`Issue type: ${issueType}`);
+            console.log(`Syncing to repo(s): ${[...targetRepos].join(', ')}`);
 
             const body = issue.data.body || '';
-            console.log('Full issue body for debug:', body);  // Logs the raw body — very helpful!
+            const publicLink = `Synced from public: ${issue.data.html_url}\n\n`;
 
-            let platform = 'untriaged';
-            let platformsDetected = [];
-            
-            // Find the Platform section (case-insensitive, handles "Platform", "Platform(s)", etc.)
-            const platformSectionMatch = body.match(/###\s*Platform(?:\s*\(s\))?\s*([\s\S]*?)(?=###|$)/i);
-            
-            if (platformSectionMatch && platformSectionMatch[1]) {
-              const sectionContent = platformSectionMatch[1].trim();
-            
-              // First, try checkbox format (standard for multi-select)
-              const checkboxMatches = [...sectionContent.matchAll(/- \[(x| )\]\s*(.+)/gi)];
-            
-              if (checkboxMatches.length > 0) {
-                for (const match of checkboxMatches) {
-                  const checked = match[1].toLowerCase() === 'x';
-                  const value = match[2].trim();
-            
-                  if (checked) {
-                    const lowerValue = value.toLowerCase();
-                    if (lowerValue.includes('web')) platformsDetected.push('web');
-                    if (lowerValue.includes('phone') || lowerValue.includes('tablet') || lowerValue.includes('mobile')) {
-                      platformsDetected.push('mobile');
-                    }
-                  }
-                }
-              } else {
-                // Fallback: plain text (single-select old style, or comma/newline separated)
-                // Split on commas, newlines, or both; clean up
-                const linesOrItems = sectionContent
-                  .split(/[\n,]+/)                     // split on newlines OR commas
-                  .map(item => item.trim())
-                  .filter(item => item.length > 0);
-            
-                for (const item of linesOrItems) {
-                  const lowerItem = item.toLowerCase();
-                  if (lowerItem.includes('web')) platformsDetected.push('web');
-                  if (lowerItem.includes('phone') || lowerItem.includes('tablet') || lowerItem.includes('mobile')) {
-                    platformsDetected.push('mobile');
-                  }
-                }
-              }
-            }
-            
-            console.log(`Detected platforms: ${platformsDetected.join(', ') || 'none'}`);
-            
-            // Now decide target repo(s) — since we can have multiple, you have a few options:
-            // OPTION A: Sync to BOTH repos if both platforms are selected (recommended for cross-platform bugs)
-            // OPTION B: Sync only to one (e.g. prefer mobile if both, or pick first)
-            // OPTION C: Sync to a shared repo + label accordingly
-            
-            // Here's OPTION A implementation (sync to all matching repos):
-            
-            if (platformsDetected.length === 0) {
-              // Fallback: label public issue for manual triage
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                labels: ['untriaged']
-              });
-              console.log('No platforms detected - labeled untriaged');
-              return;
-            }
-            
-            const targetRepos = new Set();  // avoid duplicates
-            
-            platformsDetected.forEach(p => {
-              if (p === 'web') targetRepos.add('caninesportshub');
-              if (p === 'mobile') targetRepos.add('mobile');
-            });
-            
-            if (targetRepos.size === 0) {
-              console.log('No matching repos found for detected platforms');
-              return;
-            }
-            
-            // Create mirrored issue in EACH target repo
+            // ── Mirror to each target repo ───────────────────────────────────────
             for (const targetRepo of targetRepos) {
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: targetRepo,
                 title: `[Public #${context.issue.number}] ${issue.data.title}`,
-                body: `Synced from public: ${issue.data.html_url}\n\n${body}`,
+                body: publicLink + body,
                 labels: ['synced', issueType]
               });
-              console.log(`Mirrored issue to: ${targetRepo}`);
+              console.log(`→ Mirrored to ${targetRepo}`);
             }
-            
-            // Optional: better comment on public issue
-            const syncedToText = Array.from(targetRepos).join(' and ');
+
+            // ── Leave nice comment on public issue ───────────────────────────────
+            const syncedTo = [...targetRepos]
+              .map(r => `**${r}**`)
+              .join(' and ');
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: `This issue has been mirrored to the **${syncedToText}** private repo${targetRepos.size > 1 ? 's' : ''} for tracking. Thanks!`
+              body:
+                `This issue has been mirrored to the ${syncedTo} private repo` +
+                `${targetRepos.size > 1 ? 's' : ''} for development tracking.\n\n` +
+                `Thanks for the report!`
             });
